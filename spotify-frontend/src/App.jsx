@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+
 import Scene from './DotCircle'
+import LoginModal from './LoginModal/LoginModal'
+
 import './App.css'
 
 function App() {
@@ -9,7 +10,8 @@ function App() {
 
   return (
     <>
-        <Scene />
+      <LoginModal />
+      <Scene />
     </>
   )
 }

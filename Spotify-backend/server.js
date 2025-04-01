@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const qs = require('querystring');
 const dotenv = require('dotenv');
-
+const cors = require('cors');
 dotenv.config();
 const app = express();
 const port = 3001;
@@ -11,45 +11,46 @@ const port = 3001;
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI;
+const FRONTEND_URL = "http://localhost:5173"; // Replace with your frontend URL
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1/me/player/currently-playing';
 
 let accessToken = ''; // Store your access token here
 app.use(cors({ origin: 'http://localhost:5173' })); // Allow requests from frontend
 
-// Step 1: Get Spotify Access Token using Authorization Code Flow
+// Redirect user to Spotify login
 app.get('/login', (req, res) => {
-  const scope = 'user-read-playback-state user-library-read';
-  const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${scope}`;
-  res.redirect(authUrl);
+    const scope = 'user-read-playback-state user-read-currently-playing';
+    const authUrl = `https://accounts.spotify.com/authorize?` +
+        `client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&scope=${encodeURIComponent(scope)}`;
+    res.redirect(authUrl);
 });
 
-// Step 2: Exchange authorization code for access token
+// Handle Spotify callback
 app.get('/callback', async (req, res) => {
-  const code = req.query.code;
+    const code = req.query.code || null;
 
-  try {
-    const tokenResponse = await axios.post(
-      'https://accounts.spotify.com/api/token',
-      qs.stringify({
-        code: code,
-        redirect_uri: REDIRECT_URI,
-        grant_type: 'authorization_code',
-      }),
-      {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
+    if (!code) return res.status(400).send('No authorization code provided');
 
-    // Save the access token
-    accessToken = tokenResponse.data.access_token;
-    res.send('Spotify authentication successful! You can now get the current song.');
-  } catch (error) {
-    console.error('Error exchanging token:', error);
-    res.status(500).send('Authentication failed.');
-  }
+    try {
+        const response = await axios.post('https://accounts.spotify.com/api/token', new URLSearchParams({
+            code,
+            redirect_uri: REDIRECT_URI,
+            grant_type: 'authorization_code',
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET
+        }).toString(), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        const { access_token } = response.data;
+
+        // Redirect back to frontend with the access token
+        res.redirect(`${FRONTEND_URL}/?access_token=${access_token}`);
+    } catch (error) {
+        console.error('Error exchanging token:', error.response?.data || error);
+        res.status(500).send('Error during authentication');
+    }
 });
 
 // Step 3: Get the current song playing for the authenticated user
