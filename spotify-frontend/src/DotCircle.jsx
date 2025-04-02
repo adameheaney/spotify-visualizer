@@ -105,7 +105,7 @@ const Scene = ({
         glowColor="#23691b"
 }) => {
   return (
-    <div style={{ width: "80vw", height: "80vh"}}>
+    <div style={{ width: "50vw", height: "80vh", zIndex:-1}}>
       <Canvas camera={{ position: [0, 0, 10], fov: 75 }}>
         <ambientLight intensity={0.5} />
         <DotSphere

@@ -4,10 +4,9 @@ import styles from './LoginModal.module.css';
 
 const BACKEND_URL = 'http://localhost:3001';
 
-const LoginModal = () => {
-    const [accessToken, setAccessToken] = useState(null);
+const LoginModal = ({setAccessToken}) => {
 
-    useEffect(() => {
+    const getToken = async () => {
         // Extract tokens from URL
         const params = new URLSearchParams(window.location.search);
         const token = params.get('access_token');
@@ -20,18 +19,15 @@ const LoginModal = () => {
             const storedToken = localStorage.getItem('spotify_access_token');
             if (storedToken) setAccessToken(storedToken);
         }
-    }, []);
+    }
 
     return (
         <div className={styles.modal}>
             <h1>Spotify Login</h1>
-            {!accessToken ? (
                 <a href={`${BACKEND_URL}/login`}>
-                    <button>Login with Spotify</button>
+                    <button className={styles.logInButton}>Login with Spotify</button>
                 </a>
-            ) : (
-                <p>Logged in!</p>
-            )}
+            
         </div>
     );
 };

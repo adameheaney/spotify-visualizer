@@ -46,7 +46,7 @@ app.get('/callback', async (req, res) => {
         const { access_token } = response.data;
 
         // Redirect back to frontend with the access token
-        res.redirect(`${FRONTEND_URL}/?access_token=${access_token}`);
+        res.redirect(`${FRONTEND_URL}/callback?access_token=${access_token}`);
     } catch (error) {
         console.error('Error exchanging token:', error.response?.data || error);
         res.status(500).send('Error during authentication');
